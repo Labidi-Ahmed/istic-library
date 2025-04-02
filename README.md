@@ -24,7 +24,7 @@ To start the FastAPI server, follow these steps:
 
    Activate the virtual environment (on Windows): 
    ```bash
-    source .venv\Scripts\activate
+    source '.venv\Scripts\activate'
    ```
    Install the required dependencies from the `requirements-dev.txt` file:
 ```bash
