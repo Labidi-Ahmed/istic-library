@@ -1,1 +1,1 @@
-"# Project Setup\n\n## Running Client Server\n`sh\ncd client\nnpm install\nnpm run dev\n`\n\n## Running FastAPI Server\n`` sh\ncd server\npython -m venv .venv\nsource .venv/bin/activate # For Windows use `.venv\\Scripts\\activate`\n\npip install -r requirements-dev.txt\n\n# Uncomment the following line in main.py\n# models.Base.metadata.create_all(bind=engine)\n\nuvicorn main:app --reload\n ``"
+
