@@ -1,16 +1,30 @@
-## Running the Client Server
-cd client
-npm install
-npm run dev
+### Client Server
 
-## Running the FastAPI Server
-cd server
-python -m venv .venv
-source .venv/bin/activate  # For Windows use `.venv\Scripts\activate`
-pip install -r requirements-dev.txt
+To start the client server, follow these steps:
 
-Uncomment the following line in main.py:
-#models.Base.metadata.create_all(bind=engine)
+*   Navigate to the `client` directory.
+*   Run the following command to install the required dependencies: <bash>npm install</bash>
+*   Start the development server with: <bash>npm run dev</bash>
 
-Then run:
+### FastAPI Server
+
+To start the FastAPI server, follow these steps:
+
+*   Navigate to the `server` directory.
+*   Create a virtual environment: <bash>python -m venv .venv</bash>
+*   Activate the virtual environment (on Windows): <bash>source .venv\Scripts\activate</bash>
+*   Install the required dependencies from the `requirements-dev.txt` file: <bash>pip install -r
+requirements-dev.txt</bash>
+
+**Configuring the Database**
+---------------------------
+
+To connect to the database, uncomment the following line in `main.py`:
+```python
+# models.Base.metadata.create_all(bind=engine)
+```
+
+Then, start the FastAPI server with:
+```bash
 uvicorn main:app --reload
+```
