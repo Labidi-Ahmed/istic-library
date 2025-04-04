@@ -2,14 +2,14 @@ from fastapi import FastAPI, Depends
 import models
 from fastapi.middleware.cors import CORSMiddleware
 from db import engine
+import uvicorn
 
 
 app = FastAPI()
 
 
 """ only uncomment below to create new tables """
-#models.Base.metadata.create_all(bind=engine)
-
+# models.Base.metadata.create_all(bind=engine)
 
 
 origins = [
@@ -28,7 +28,9 @@ app.add_middleware(
 
 @app.get("/")
 def helloWorld():
-    return { "hello world"}
+
+    return {" hello world"}
 
 
-
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=8000)
