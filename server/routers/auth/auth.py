@@ -13,19 +13,19 @@ from .auth_service import (
     generate_session_token,
     create_session,
 )
-from models import User, Session  # Make sure UserSession is imported
+from models import User, Session
 from db import get_db
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-config = Config(".env")  # read config from .env file
+config = Config(".env")
 oauth = OAuth(config)
 
-# Correctly register the OAuth client
+
 oauth.register(
     name="google",
-    client_id=config("GOOGLE_CLIENT_ID"),  # Correct parameter name
-    client_secret=config("GOOGLE_CLIENT_SECRET"),  # Correct parameter name
+    client_id=config("GOOGLE_CLIENT_ID"),
+    client_secret=config("GOOGLE_CLIENT_SECRET"),
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
@@ -44,14 +44,12 @@ async def auth_callback(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
     try:
-        # Get the token from Google (async)
         token = await oauth.google.authorize_access_token(request)
         user = token.get("userinfo")
 
         if not user:
             raise HTTPException(status_code=400, detail="Failed to get user info")
 
-        # Check if user exists (SYNC query, no await)
         existing_user = db.query(User).filter(User.email == user["email"]).first()
 
         user_id = None
@@ -59,27 +57,24 @@ async def auth_callback(
             new_user = User(
                 email=user["email"],
                 username=user["name"],
-                picture=user.get("picture"),  # Optional: Add if column exists
+                picture=user.get("picture"),
                 createdAt=datetime.utcnow(),
             )
             db.add(new_user)
-            db.commit()  # SYNC, no await
-            db.refresh(new_user)  # SYNC, no await
+            db.commit()
+            db.refresh(new_user)
             user_id = new_user.id
         else:
             user_id = existing_user.id
 
-        # Generate session token (sync or async?)
         session_token = generate_session_token()
 
-        # If create_session is async, keep await; otherwise remove it
-        await create_session(  # Check if this is async!
+        await create_session(
             token=session_token,
             userId=user_id,
             db=db,
         )
 
-        # Set the cookie (sync)
         set_session_token_cookie(
             response=response,
             token=session_token,
