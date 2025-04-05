@@ -32,6 +32,7 @@ class User(Base):
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
     username = Column(String, nullable=False)
+    picture = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
     createdAt = Column(DateTime, default=datetime.now)
 
