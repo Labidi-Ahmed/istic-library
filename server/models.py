@@ -34,13 +34,14 @@ class User(Base):
     username = Column(String, nullable=False)
     picture = Column(String, nullable=True)
     email = Column(String, unique=True, nullable=False)
+    role = Column(String, nullable=True, default="user")
+
     createdAt = Column(DateTime, default=datetime.now)
 
-    sessions = relationship("Session", back_populates="user")
-    roles = relationship("UserRole", back_populates="user")
+    sessions = relationship("UserSession", back_populates="user")
 
 
-class Session(Base):
+class UserSession(Base):
     __tablename__ = "session"
 
     id = Column(String, primary_key=True)
@@ -48,19 +49,6 @@ class Session(Base):
     expiresAt = Column(DateTime, nullable=False)
 
     user = relationship("User", back_populates="sessions")
-
-
-class UserRole(Base):
-    __tablename__ = "user_role"
-
-    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
-    cin = Column(Integer, nullable=False, unique=True)
-    userId = Column(String, ForeignKey("user.id"), nullable=False)
-    role = Column(Enum(AppRole), nullable=False)
-
-    user = relationship("User", back_populates="roles")
-
-    __table_args__ = (UniqueConstraint("userId", "role", name="unique_user_role"),)
 
 
 class RolePermission(Base):

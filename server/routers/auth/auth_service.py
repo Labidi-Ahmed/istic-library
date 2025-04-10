@@ -5,13 +5,17 @@ from datetime import datetime, timedelta
 from typing import Optional, TypedDict
 from fastapi import Response, Depends
 from sqlalchemy.orm import Session
-from models import User, Session as UserSession
+from models import User, UserSession
 from db import get_db
+import logging
 
 
 class SessionResult(TypedDict):
     session: Optional[UserSession]
     user: Optional[User]
+
+
+logger = logging.getLogger("uvicorn")
 
 
 def generate_session_token() -> str:
@@ -31,7 +35,7 @@ async def create_session(
     db: Session = Depends(get_db),
 ) -> UserSession:
     session_id = hashlib.sha256(token.encode()).hexdigest()
-    expiresAt = datetime.now() + timedelta(days=30)
+    expiresAt = datetime.utcnow() + timedelta(days=30)
 
     session = UserSession(id=session_id, userId=userId, expiresAt=expiresAt)
 
@@ -42,40 +46,40 @@ async def create_session(
     return session
 
 
-async def validate_user(token: str, db: Session = Depends(get_db)) -> Optional[User]:
+async def validate_user(token: str, db: Session) -> Optional[User]:
     """Validates the token and returns the user if valid"""
     validation_result = await validate_session_token(token, db)
     return validation_result.get("user")
 
 
-async def validate_session_token(
-    token: str, db: Session = Depends(get_db)
-) -> SessionResult:
+async def validate_session_token(token: str, db: Session) -> SessionResult:
     if not token:
         return {"session": None, "user": None}
 
     # find the session id by encoding the token
-    session_id = hashlib.sha256(token.encode()).hexdigest()
-    session = db.query(UserSession).filter(UserSession.id == session_id).first()
+    sessionId = hashlib.sha256(token.encode()).hexdigest()
+    logger.info(f"Session ID: {sessionId}")
+    session = db.query(UserSession).filter(UserSession.id == sessionId).first()
+    logger.info(f"Session: {session}")
 
     if session is None:
         return {"session": None, "user": None}
 
-    user = db.query(User).filter(User.id == session.user_id).first()
+    user = db.query(User).filter(User.id == session.userId).first()
 
     if user is None:
         return {"session": None, "user": None}
 
     # Check if session expired
-    if datetime.now() >= session.expires_at:
+    if datetime.utcnow() >= session.expiresAt:
         db.delete(session)
         db.commit()
         return {"session": None, "user": None}
 
     # Extend session if it's close to expiration (less than 15 days)
-    if datetime.now() >= session.expires_at - timedelta(days=15):
-        new_expires_at = datetime.now() + timedelta(days=30)
-        session.expires_at = new_expires_at
+    if datetime.utcnow() >= session.expiresAt - timedelta(days=15):
+        new_expires_at = datetime.utcnow() + timedelta(days=30)
+        session.expiresAt = new_expires_at
         db.commit()
         db.refresh(session)
 
@@ -93,13 +97,14 @@ def set_session_token_cookie(
     response: Response, token: str, expires_at: datetime
 ) -> None:
     response.set_cookie(
-        key="session",
+        key="sessionToken",
         value=token,
         httponly=True,
         samesite="lax",
         expires=expires_at.timestamp(),
         path="/",
-        secure=os.getenv("ENV") == "PROD",
+        secure=False,
+        domain="localhost",
     )
 
 

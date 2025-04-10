@@ -17,8 +17,11 @@ load_dotenv()
 """ only uncomment below to create new tables """
 Base.metadata.create_all(bind=engine)
 
+
 origins = [
     "http://localhost:3000",
+    "http://localhost",
+    "http://localhost:7000",
 ]
 
 app.add_middleware(
@@ -37,11 +40,10 @@ def helloWorld():
 
 logger = logging.getLogger("uvicorn")
 
-logger.info(f"GOOGLE_CLIENT_ID: {os.getenv('GOOGLE_CLIENT_ID')}")
-logger.info(f"GOOGLE_CLIENT_SECRET: {os.getenv('GOOGLE_CLIENT_SECRET')}")
-logger.info(f"GOOGLE_REDIRECT_URI: {os.getenv('GOOGLE_REDIRECT_URI')}")
+logger.info(f"GOOGLE_CLIENT_ID: {os.getenv('ORIGIN')}")
+
 
 app.include_router(auth_router, prefix="/api")
 
 if __name__ == "__main__":
-    uvicorn.run("main:app", host="127.0.0.1", port=7000, reload=True)
+    uvicorn.run("main:app", host="localhost", port=7000, reload=True)

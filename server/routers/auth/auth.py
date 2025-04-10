@@ -1,8 +1,8 @@
 import os
 from fastapi import APIRouter, Depends, HTTPException, Response
-from authlib.integrations.starlette_client import OAuth
+from authlib.integrations.starlette_client import OAuth, OAuthError
 from starlette.requests import Request
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, HTMLResponse
 from datetime import datetime, timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy.future import select
@@ -13,8 +13,13 @@ from .auth_service import (
     generate_session_token,
     create_session,
 )
-from models import User, Session
+from models import User, UserSession
 from db import get_db
+from dependencies.session import get_user
+import logging
+
+
+logger = logging.getLogger("uvicorn")
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -31,25 +36,34 @@ oauth.register(
 )
 
 
+@router.get("/check-auth")
+async def check_auth(request: Request, user=Depends(get_user)):
+    if user:
+        return {"isAuthenticated": True, "user": user}
+    return {"isAuthenticated": False}
+
+
 @router.get("/google")
 async def google_login(request: Request):
-    redirect_uri = config("GOOGLE_REDIRECT_URI")
+    # redirect_uri = config("GOOGLE_REDIRECT_URI")
+    redirect_uri = request.url_for("google_callback")
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Redirect URI not configured")
     return await oauth.google.authorize_redirect(request, redirect_uri)
 
 
-@router.get("/google/callback")
+@router.get("/google/callback", name="google_callback")
 async def auth_callback(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
     try:
+
         token = await oauth.google.authorize_access_token(request)
+
         user = token.get("userinfo")
 
         if not user:
             raise HTTPException(status_code=400, detail="Failed to get user info")
-
         existing_user = db.query(User).filter(User.email == user["email"]).first()
 
         user_id = None
@@ -69,19 +83,24 @@ async def auth_callback(
 
         session_token = generate_session_token()
 
-        await create_session(
+        user_session = await create_session(
             token=session_token,
             userId=user_id,
             db=db,
         )
 
+        logger.info(f"created session: session token : {session_token}")
+
+        redirect_response = RedirectResponse(
+            url="http://localhost:3000", status_code=303
+        )
         set_session_token_cookie(
-            response=response,
+            response=redirect_response,
             token=session_token,
             expires_at=datetime.utcnow() + timedelta(days=30),
         )
 
-        return RedirectResponse(url="/")
+        return redirect_response
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
