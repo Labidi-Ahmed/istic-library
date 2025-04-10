@@ -12,6 +12,7 @@ from .auth_service import (
     set_session_token_cookie,
     generate_session_token,
     create_session,
+    delete_session_token_cookie,
 )
 from models import User, UserSession
 from db import get_db
@@ -34,13 +35,6 @@ oauth.register(
     server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
     client_kwargs={"scope": "openid email profile"},
 )
-
-
-@router.get("/check-auth")
-async def check_auth(request: Request, user=Depends(get_user)):
-    if user:
-        return {"isAuthenticated": True, "user": user}
-    return {"isAuthenticated": False}
 
 
 @router.get("/google")
@@ -104,3 +98,16 @@ async def auth_callback(
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
+
+
+@router.post("/logout")
+async def logout(request: Request, response: Response, user=Depends(get_user)):
+    delete_session_token_cookie(response)
+    return {"message": "Logged out successfully"}
+
+
+@router.get("/check-auth")
+async def check_auth(request: Request, user=Depends(get_user)):
+    if user:
+        return {"isAuthenticated": True, "user": user}
+    return {"isAuthenticated": False}

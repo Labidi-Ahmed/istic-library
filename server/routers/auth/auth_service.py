@@ -104,19 +104,17 @@ def set_session_token_cookie(
         expires=expires_at.timestamp(),
         path="/",
         secure=False,
-        domain="localhost",
     )
 
 
 def delete_session_token_cookie(response: Response) -> None:
     response.set_cookie(
-        key="session",
+        key="sessionToken",
         value="",
         httponly=True,
         samesite="lax",
         max_age=0,
         path="/",
-        secure=os.getenv("ENV") == "PROD",
     )
 
 
