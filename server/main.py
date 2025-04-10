@@ -15,7 +15,7 @@ app.add_middleware(SessionMiddleware, secret_key="secret-string")
 
 load_dotenv()
 """ only uncomment below to create new tables """
-Base.metadata.create_all(bind=engine)
+# Base.metadata.create_all(bind=engine)
 
 
 origins = [
