@@ -27,6 +27,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 config = Config(".env")
 oauth = OAuth(config)
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:7000")
 
 oauth.register(
     name="google",
@@ -39,7 +40,6 @@ oauth.register(
 
 @router.get("/google")
 async def google_login(request: Request):
-    # redirect_uri = config("GOOGLE_REDIRECT_URI")
     redirect_uri = request.url_for("google_callback")
     if not redirect_uri:
         raise HTTPException(status_code=400, detail="Redirect URI not configured")
@@ -51,13 +51,12 @@ async def auth_callback(
     request: Request, response: Response, db: Session = Depends(get_db)
 ):
     try:
-
         token = await oauth.google.authorize_access_token(request)
-
         user = token.get("userinfo")
 
         if not user:
             raise HTTPException(status_code=400, detail="Failed to get user info")
+        
         existing_user = db.query(User).filter(User.email == user["email"]).first()
 
         user_id = None
@@ -76,17 +75,14 @@ async def auth_callback(
             user_id = existing_user.id
 
         session_token = generate_session_token()
-
         user_session = await create_session(
             token=session_token,
             userId=user_id,
             db=db,
         )
 
-        logger.info(f"created session: session token : {session_token}")
-
         redirect_response = RedirectResponse(
-            url="http://localhost:3000", status_code=303
+            url=FRONTEND_URL, status_code=303
         )
         set_session_token_cookie(
             response=redirect_response,
@@ -97,17 +93,19 @@ async def auth_callback(
         return redirect_response
 
     except Exception as e:
+        logger.error(f"Authentication failed: {str(e)}")
         raise HTTPException(status_code=400, detail=f"Authentication failed: {str(e)}")
 
 
 @router.post("/logout")
 async def logout(request: Request, response: Response, user=Depends(get_user)):
+    response = RedirectResponse(url=FRONTEND_URL)
     delete_session_token_cookie(response)
-    return {"message": "Logged out successfully"}
+    return response
 
 
 @router.get("/check-auth")
 async def check_auth(request: Request, user=Depends(get_user)):
-    if user:
-        return {"isAuthenticated": True, "user": user}
-    return {"isAuthenticated": False}
+    if not user:
+        return {"isAuthenticated": False, "user": None}
+    return {"isAuthenticated": True, "user": user}
