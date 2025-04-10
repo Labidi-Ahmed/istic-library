@@ -1,5 +1,5 @@
 import {Navigate, Outlet} from 'react-router-dom';
-import useAuth from '@/hooks/useAuth';
+import useAuth from '@/hooks/auth/useAuth';
 import Loading from '@/components/Loader';
 import {useEffect} from 'react';
 
