@@ -41,5 +41,5 @@ To connect to the database, uncomment the following line in `main.py`:
 
 Then, start the FastAPI server with:
 ```bash
-uvicorn main:app --reload
+uvicorn main:app --reload --port 7000
 ```
