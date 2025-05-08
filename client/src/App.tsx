@@ -13,6 +13,7 @@ import AppLayout from './components/AppLayout';
 import { AuthProvider } from './contexts/AuthContext';
 import BooksPage from './pages/books';
 import MyLoansPage from './pages/loans';
+import LibraryAdminPage from './pages/admin/library';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -23,6 +24,7 @@ const router = createBrowserRouter(
           <Route index element={<BooksPage />} />
           <Route path="books" element={<BooksPage />} />
           <Route path="loans" element={<MyLoansPage />} />
+          <Route path="loansAdminPage" element={<LibraryAdminPage />} />
         </Route>
       </Route>
       <Route element={<PublicRoutes />}>

@@ -18,9 +18,7 @@ def create_loan(db: Session, loan: LoanCreate):
         raise HTTPException(status_code=400, detail="Book is not available")
     
     # Create loan and update book availability
-    db_loan = Loan(**loan.dict())
-    book.available = False
-    
+    db_loan = Loan(**loan.dict())    
     db.add(db_loan)
     db.commit()
     db.refresh(db_loan)
@@ -37,6 +35,11 @@ def update_loan(db: Session, loan_id: int, loan_update: LoanUpdate):
         book = db.query(Book).filter(Book.id == db_loan.book_id).first()
         if book:
             book.available = True
+    elif (loan_update.status == LoanStatus.APPROVED and 
+        db_loan.status == LoanStatus.PENDING):
+        book = db.query(Book).filter(Book.id == db_loan.book_id).first()
+        if book:
+            book.available = False 
     
     db_loan.status = loan_update.status
     db.commit()

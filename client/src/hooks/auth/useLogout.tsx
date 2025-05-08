@@ -1,29 +1,24 @@
-import {useMutation} from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import API_URL from '@/api/config';
-import {useUserStore} from '@/stores/userStore';
-import {useNavigate} from 'react-router-dom';
+import { useUserStore } from '@/stores/userStore';
 
 const userLogout = async () => {
   const res = await axios.post(
     `${API_URL}/auth/logout`,
     {},
-    {
-      withCredentials: true,
-    }
+    { withCredentials: true }
   );
   return res.data;
 };
 
-const useLogout = () => {
-  const navigate = useNavigate();
+// 🔁 ✅ Ajout du paramètre navigate
+const useLogout = (navigate: (path: string) => void) => {
+  const { setUser } = useUserStore();
 
-  const {setUser} = useUserStore();
-
-  const {mutate: logout, isPending: logoutLoading} = useMutation({
+  const { mutate: logout, isPending: logoutLoading } = useMutation({
     mutationFn: userLogout,
     onSuccess: () => {
-      navigate('/');
       setUser({
         id: '',
         picture: '',
@@ -31,6 +26,7 @@ const useLogout = () => {
         email: '',
         role: '',
       });
+      navigate('/'); // ✅ Redirection vers "/"
     },
   });
 

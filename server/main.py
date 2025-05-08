@@ -5,6 +5,8 @@ import uvicorn
 from routers.auth.auth import router as auth_router
 from routers.book import router as book_router
 from routers.loan import router as loan_router
+from routers import user 
+
 from dotenv import load_dotenv
 import logging
 import os
@@ -48,6 +50,7 @@ logger.info(f"GOOGLE_CLIENT_ID: {os.getenv('ORIGIN')}")
 app.include_router(auth_router, prefix="/api")
 app.include_router(book_router, prefix="/api")
 app.include_router(loan_router, prefix="/api")
+app.include_router(user.router, prefix="/api")
 
 if __name__ == "__main__":
     uvicorn.run("main:app", host="localhost", port=7000, reload=True)

@@ -1,5 +1,6 @@
 import {LogOut, Loader2} from 'lucide-react';
 import {Avatar, AvatarFallback, AvatarImage} from '@/components/ui/avatar';
+import { useNavigate } from "react-router-dom";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,8 +14,10 @@ import {useUserStore} from '@/stores/userStore';
 import useLogout from '@/hooks/auth/useLogout';
 
 export function UserMenu() {
-  const {user} = useUserStore();
-  const {logout, logoutLoading} = useLogout();
+  const { user } = useUserStore();
+  const navigate = useNavigate(); // ✅ Appelé dans un composant
+  const { logout, logoutLoading } = useLogout(navigate); // ✅ Passe navigate
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -25,26 +28,23 @@ export function UserMenu() {
           </AvatarFallback>
         </Avatar>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-56   rounded-xl p-2 ">
+      <DropdownMenuContent className="w-56 rounded-xl p-2">
         <DropdownMenuLabel className="font-normal text-sm text-muted-foreground">
           <span>{user.email}</span>
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
-        <DropdownMenuGroup></DropdownMenuGroup>
         <DropdownMenuItem
-          onClick={() => {
-            logout();
-          }}
+          onClick={() => logout()}
           disabled={logoutLoading}
-          className="relative "
+          className="relative"
         >
           {logoutLoading ? (
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
           ) : (
-            <LogOut className="mr-2 h-4 w-4 " />
+            <LogOut className="mr-2 h-4 w-4" />
           )}
-          <span className="">Sign Out</span>
+          <span>Sign Out</span>
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

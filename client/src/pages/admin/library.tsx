@@ -29,10 +29,32 @@ const LibraryAdminPage = () => {
 
   const fetchPendingLoans = async () => {
     try {
-      const response = await fetch('/api/loans/status/pending');
+      const response = await fetch('http://localhost:7000/api/loans/status/pending');
       if (response.ok) {
-        const data = await response.json();
-        setPendingLoans(data);
+        const loans = await response.json();
+  
+        // Fetch usernames for each loan
+        const loansWithUsernames = await Promise.all(
+          loans.map(async (loan: Omit<Loan, 'user'>) => {
+            try {
+              const userResponse = await fetch(`http://localhost:7000/api/users/${loan.user_id}`);
+              const userData = await userResponse.json();
+  
+              return {
+                ...loan,
+                user: { username: userData.username },
+              };
+            } catch (err) {
+              console.error(`Error fetching user ${loan.user_id}:`, err);
+              return {
+                ...loan,
+                user: { username: 'Unknown' },
+              };
+            }
+          })
+        );
+  
+        setPendingLoans(loansWithUsernames);
       }
     } catch (error) {
       console.error('Error fetching pending loans:', error);
@@ -41,7 +63,7 @@ const LibraryAdminPage = () => {
 
   const updateLoanStatus = async (loanId: number, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`/api/loans/${loanId}`, {
+      const response = await fetch(`http://localhost:7000/api/loans/${loanId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

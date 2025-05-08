@@ -6,6 +6,7 @@ import { UserMenu } from "./auth/UserMenu";
 
 export function AppHeader() {
   const { user } = useAuth();
+  
   useEffect(() => {
     console.log(user);
   }, []);
@@ -26,14 +27,14 @@ export function AppHeader() {
               </Link>
             )}
             {user?.role === 'admin' && (
-              <Link to="/app/admin/library" className="flex items-center text-sm font-medium">
-                Admin
+              <Link to="/app/loansAdminPage" className="flex items-center text-sm font-medium">
+                loansAdminPage
               </Link>
             )}
           </nav>
         </div>
         <div className="ml-auto flex items-center space-x-4">
-          {user ? (
+          {user?.username ? (
             <UserMenu />
           ) : (
             <Link to="/auth/login">
